@@ -42,6 +42,8 @@ def upload():
             result = api_response
             original_code = result.get('code')
             result['code'] = swap_code(original_code)
+        except ValueError:
+            api_response = response.text
         return jsonify({
             'status_code': response.status_code,
             'response': result
