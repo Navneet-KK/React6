@@ -116,27 +116,21 @@
   </style>
 </head>
 <body>
-  <div class="hero">
-    <h1>🔹 OneKeyDrop</h1>
-    <p>One key to drop, one click to share.</p>
-  </div>
-  <!-- Upload Box -->
   <div class="box">
-    <h2>Upload Files</h2>
-    <input type="file" id="uploadInput" />
-    <button onclick="Upload()">Upload</button>
-    <select id="expiry" title="Expiration">
-      <option value="900000" selected>15min</option>
-      <option value="3600000">1h</option>
-      <option value="21600000">6h</option>
-      <option value="86400000">1d</option>
-      <option value="172800000">2d</option>
-      <option value="259200000">3d</option>
-    </select>
-    <p id="uploadStatus"></p>
-    <progress id="uploadProgress" style="display:none;" max="100" value="0"></progress>
-    <div class="result" id="uploadResult" style="display:none;position: relative; padding: 10px; border: 1px solid #ccc;"></div>
-  </div>
+  <h2>Upload Files</h2>
+  <input type="file" id="uploadInput" />
+  <select id="expiry" title="Expiration">
+    <option value="900000" selected>15min</option>
+    <option value="3600000">1h</option>
+    <option value="21600000">6h</option>
+    <option value="86400000">1d</option>
+    <option value="172800000">2d</option>
+    <option value="259200000">3d</option>
+  </select>
+  <button onclick="Upload()">Upload</button>
+  <p id="uploadStatus"></p><progress id="uploadProgress" style="display:none;" max="100" value="0"></progress>
+  <div class="result" id="uploadResult" style="display:none;position: relative; padding: 10px; border: 1px solid #ccc;"></div>
+</div>
 
   <!-- Retrieve Box -->
   <div class="box">
