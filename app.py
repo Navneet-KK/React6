@@ -8,7 +8,7 @@ FILE_INFO_API_URL = "https://temp.kotol.cloud/api/fileinfo/?code="
 
 @app.route('/')
 def index():
-    return render_template('test-gui.html')
+    return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
 def upload():
