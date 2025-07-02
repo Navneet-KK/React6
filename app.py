@@ -8,7 +8,7 @@ FILE_INFO_API_URL = "https://temp.kotol.cloud/api/fileinfo/?code="
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('test-gui.html')
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -39,12 +39,15 @@ def upload():
         # Try parsing JSON, fallback to text
         try:
             api_response = response.json()
+            result = api_response
+            original_code = result.get('code')
+            result['code'] = swap_code(original_code)
         except ValueError:
             api_response = response.text
 
         return jsonify({
             'status_code': response.status_code,
-            'response': api_response
+            'response': result
         })
 
     except Exception as e:
@@ -55,17 +58,15 @@ def upload():
 @app.route('/check', methods=['POST'])
 def check_file_code():
     data = request.get_json()
-    code = data.get('code')
+    code = swap_code(data.get('code'))
+
     if not code:
         return jsonify({'error': 'No code provided'}), 400
     try:
         # Call the external API to get file info by code
         response = requests.get(FILE_INFO_API_URL + code)
         if response.status_code == 200:
-            result = response.json()
-            original_code = result.get('code')
-            result['code'] = swap_code(original_code)
-            return jsonify(result)
+            return jsonify(response.json())
         else:
             return jsonify({'error': 'Code not found or expired', 'status_code': response.status_code}), response.status_code
     except Exception as e:
@@ -75,7 +76,7 @@ def check_file_code():
 @app.route('/download')
 def proxy_download():
     file = request.args.get('file')
-    code = swap_code(request.args.get('code'))
+    code = request.args.get('code')
 
     real_url = f"https://temp.kotol.cloud/api/download/{file}?code={code}"
     r = requests.get(real_url, stream=True)
