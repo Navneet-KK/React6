@@ -143,8 +143,8 @@
   <!-- Retrieve Box -->
   <div class="box">
     <h2>Retrieve Files</h2>
-    <div class="input-group">
-      <div id="codeInput">
+    <div class="input-group" style="display: flex; align-items: center; gap: 10px;">
+      <div id="codeInput" style="display: flex; gap: 5px;">
         <input type="text" class="codeLetter filled" maxlength="1">
         <input type="text" class="codeLetter filled" maxlength="1">
         <input type="text" class="codeLetter filled" maxlength="1">
@@ -266,14 +266,16 @@
           const expirationDate = new Date(result.expiration).toLocaleString();
 
           output.innerHTML = `
-            File Name: <code>${file.filename}</code><br>
+            File_Name: <code>${file.filename}</code><br>
             Size: <code>${(file.size / (1024 * 1024)).toFixed(2)} MB</code><br>
-            Expires In: <code>${minutesLeft} minutes (~${hoursLeft} hours)</code><br>
+            Expires_In: <code>${minutesLeft} minutes (~${hoursLeft} hours)</code><br>
             <button class="download-btn" id="downloadBtn">Download</button>
             <span onclick="hideCheckBox()" style="position: absolute; top: 5px; right: 10px; cursor: pointer; font-weight: bold;">❌</span>
           `;
 
           document.getElementById("downloadBtn").onclick = () => {
+            const statusElement = document.getElementById("checkStatus");
+            statusElement.innerText = "Downloading..."; // Show status
             fetch(`/download?file=${fileNameEncoded}&code=${code}`)
               .then(res => {
                 if (!res.ok) throw new Error("Failed to fetch file");
@@ -286,18 +288,22 @@
                 a.click();
                 URL.revokeObjectURL(a.href);
               })
-              .catch(() => alert("Download failed"));
+              .catch(err => {
+                alert("Download failed: " + err.message);
+              })
+              .finally(() => {
+                // Hide status regardless of success or error
+                statusElement.innerText = "";
+              });
           };
         }
-
-        output.style.display = "block";
-        statusText.textContent = "";
-
       } catch (err) {
         output.textContent = "Error: " + err.message;
         output.style.display = "block";
         statusText.textContent = "";
       }
+      document.getElementById('checkResult').style.display = "block";
+      statusText.textContent = "";
     }
 
     function copyCode() {
