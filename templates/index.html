@@ -267,7 +267,7 @@
 
           output.innerHTML = `
             File Name: <code>${file.filename}</code><br>
-            Size: <code>${(file.size / (1024 * 1024)).toFixed(3)} MB</code><br>
+            Size: <code>${(file.size / (1024 * 1024)).toFixed(2)} MB</code><br>
             Expires In: <code>${minutesLeft} minutes (~${hoursLeft} hours)</code><br>
             <button class="download-btn" id="downloadBtn">Download</button>
             <span onclick="hideCheckBox()" style="position: absolute; top: 5px; right: 10px; cursor: pointer; font-weight: bold;">❌</span>
