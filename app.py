@@ -42,9 +42,6 @@ def upload():
             result = api_response
             original_code = result.get('code')
             result['code'] = swap_code(original_code)
-        except ValueError:
-            api_response = response.text
-
         return jsonify({
             'status_code': response.status_code,
             'response': result
@@ -83,7 +80,7 @@ def proxy_download():
 
     # Relay response to frontend
     return Response(
-        r.iter_content(chunk_size=4096),
+        r.iter_content(chunk_size=65536),
         headers={
             "Content-Disposition": f'attachment; filename="{file}"',
             "Content-Type": r.headers.get("Content-Type", "application/octet-stream")
