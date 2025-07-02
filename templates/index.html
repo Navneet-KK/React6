@@ -116,7 +116,13 @@
   </style>
 </head>
 <body>
-  <div class="box">
+  <div class="hero">
+    <h1>OneKeyDrop</h1>
+    <p>One key to drop, one click to share.</p>
+  </div>
+
+  <!-- Upload Box -->
+<div class="box">
   <h2>Upload Files</h2>
   <input type="file" id="uploadInput" />
   <select id="expiry" title="Expiration">
@@ -131,6 +137,7 @@
   <p id="uploadStatus"></p><progress id="uploadProgress" style="display:none;" max="100" value="0"></progress>
   <div class="result" id="uploadResult" style="display:none;position: relative; padding: 10px; border: 1px solid #ccc;"></div>
 </div>
+
 
   <!-- Retrieve Box -->
   <div class="box">
