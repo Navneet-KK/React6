@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuickShare</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .box {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 2rem;
+    }
+
+    input[type="file"] {
+      margin-top: 10px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 5px;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .result, .check-result {
+      margin-top: 1rem;
+      background: #e9f7ef;
+      padding: 1rem;
+      border-radius: 5px;
+    }
+
+    .download-btn {
+      background-color: #28a745;
+      margin-top: 10px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-group input {
+      flex: 1;
+      padding: 0.025rem;
+    }
+
+    #codeInput {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: space-around;
+      margin: 0.375rem 0px 0.375rem 0px;
+    }
+
+    .codeLetter {
+      height: 2em;
+      width: 2em;
+      font-size: 160%;
+      border: 2px solid #0a000090;
+      border-radius: 0.75rem;
+      background-color: #06000050;
+      outline: none;
+      font-family: "Nunito";
+      color: #000000;
+      text-align: center;
+      transition: 120ms;
+      max-width: 100%;
+    }
+    .codeLetter.filled {
+      border-color: #3b1a3b48;
+      background-color: #f8c7f850;
+    }
+  </style>
+</head>
+<body>
+  <h1>QuickShare</h1>
+
+  <!-- Upload Box -->
+  <div class="box">
+    <h2>Upload Files</h2>
+    <input type="file" id="uploadInput" />
+    <button onclick="Upload()">Upload</button>
+    <select id="expiry" title="Expiration">
+      <option value="900000" selected>15min</option>
+      <option value="3600000">1h</option>
+      <option value="21600000">6h</option>
+      <option value="86400000">1d</option>
+      <option value="172800000">2d</option>
+      <option value="259200000">3d</option>
+    </select>
+    <p id="uploadStatus"></p>
+    <progress id="uploadProgress" style="display:none;" max="100" value="0"></progress>
+    <div class="result" id="uploadResult" style="display:none;position: relative; padding: 10px; border: 1px solid #ccc;"></div>
+  </div>
+
+  <!-- Retrieve Box -->
+  <div class="box">
+    <h2>Retrieve Files</h2>
+    <div class="input-group">
+      <div id="codeInput">
+        <input type="text" class="codeLetter filled" maxlength="1">
+        <input type="text" class="codeLetter filled" maxlength="1">
+        <input type="text" class="codeLetter filled" maxlength="1">
+        <input type="text" class="codeLetter filled" maxlength="1">
+      </div>
+      <button onclick="Check()">Check</button>
+    </div>
+    <p id="checkStatus"></p>
+    <div class="check-result" id="checkResult" style="display:none;position: relative; padding: 10px; border: 1px solid #ccc;"></div>
+  </div>
+
+  <script>
+    function Upload() {
+      const fileInput = document.getElementById('uploadInput');
+      const file = fileInput.files[0];
+      const output = document.getElementById("uploadResult");
+      const statusText = document.getElementById("uploadStatus");
+      const expiry = document.getElementById("expiry").value;
+      const progressBar = document.getElementById('uploadProgress');
+
+      if (!file) {
+        output.textContent = "No file selected.";
+        output.style.display = "block";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append("expiry", expiry);
+
+      const xhr = new XMLHttpRequest();
+
+      statusText.textContent = "Uploading...";
+      progressBar.style.display = "block";
+      const estimatedSeconds = Math.max(3, Math.ceil(file.size / (1024 * 1024)));
+      let progress = 0;
+      let fakeProgress = setInterval(() => {
+        if (progress < 98) {
+          progress += 100 / estimatedSeconds;
+          progressBar.value = Math.min(progress, 98);
+        }
+      }, 1000);
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === 4) {
+          clearInterval(fakeProgress);
+          progressBar.value = 100;
+
+          if (xhr.status === 200) {
+            const json = JSON.parse(xhr.responseText);
+            const result = json.response;
+            const expirationDate = new Date(result.expiration).toLocaleString();
+
+            output.innerHTML = `
+              File Name: ${result.filename}<br>
+              Code: <span id="codeText">${result.code}</span> 
+              <span onclick="copyCode()" id="copyIcon" style="cursor: pointer;" title="Copy">📋</span><br>
+              Expires At: ${expirationDate}
+              <span onclick="hideUploadBox()" style="position: absolute; top: 5px; right: 10px; cursor: pointer; font-weight: bold;">❌</span>
+            `;
+
+            output.style.display = "block";
+            progressBar.value = 0;
+            statusText.textContent = "";
+            progressBar.style.display = "none";
+          } else {
+            output.textContent = "Upload failed. Status: " + xhr.status;
+            output.style.display = "block";
+            statusText.textContent = "";
+            progressBar.style.display = "none";
+          }
+        }
+      };
+
+      xhr.open("POST", "/upload");
+      xhr.send(formData);
+    }
+
+    function getCodeInput() {
+      const inputs = document.querySelectorAll('#codeInput .codeLetter');
+      let code = '';
+      inputs.forEach(input => {
+        code += input.value.toUpperCase();
+      });
+      return code;
+    }
+
+    async function Check() {
+      const statusText = document.getElementById("checkStatus");
+      const code = getCodeInput();
+      const output = document.getElementById('checkResult');
+
+      if (!code) {
+        output.textContent = "Please enter a code.";
+        document.getElementById("checkResult").style.display = "block";
+        return;
+      }
+
+      statusText.textContent = "Fetching...";
+      try {
+        const response = await fetch('/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code })
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+          output.textContent = "Error: " + result.error;
+          statusText.textContent = "";
+        } else {
+          const file = result.files[0];
+          const fileNameEncoded = encodeURIComponent(file.filename);
+          const code = result.code;
+          const msLeft = result.expiration - result.currentTime;
+          const minutesLeft = Math.floor(msLeft / 60000);
+          const hoursLeft = (minutesLeft / 60).toFixed(1);
+          const expirationDate = new Date(result.expiration).toLocaleString();
+
+          output.innerHTML = `
+            File Name: <code>${file.filename}</code><br>
+            Size: <code>${(file.size / (1024 * 1024)).toFixed(3)} MB</code><br>
+            Expires In: <code>${minutesLeft} minutes (~${hoursLeft} hours)</code><br>
+            <button class="download-btn" id="downloadBtn">Download</button>
+            <span onclick="hideCheckBox()" style="position: absolute; top: 5px; right: 10px; cursor: pointer; font-weight: bold;">❌</span>
+          `;
+
+          document.getElementById("downloadBtn").onclick = () => {
+            fetch(`/download?file=${fileNameEncoded}&code=${code}`)
+              .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch file");
+                return res.blob();
+              })
+              .then(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = file.filename;
+                a.click();
+                URL.revokeObjectURL(a.href);
+              })
+              .catch(() => alert("Download failed"));
+          };
+        }
+
+        output.style.display = "block";
+        statusText.textContent = "";
+
+      } catch (err) {
+        output.textContent = "Error: " + err.message;
+        output.style.display = "block";
+        statusText.textContent = "";
+      }
+    }
+
+    function copyCode() {
+      const text = document.getElementById("codeText").textContent;
+      const icon = document.getElementById("copyIcon");
+
+      navigator.clipboard.writeText(text).then(() => {
+        icon.textContent = "✅ Copied";
+        setTimeout(() => icon.textContent = "📋", 2000);
+      });
+    }
+
+    function hideUploadBox() {
+      document.getElementById("uploadResult").style.display = "none";
+    }
+
+    function hideCheckBox() {
+      document.getElementById("checkResult").style.display = "none";
+    }
+
+    document.querySelectorAll('#codeInput input').forEach(input => {
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') Check();
+      });
+    });
+
+    const inputs = document.querySelectorAll('#codeInput .codeLetter');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      inputs[0].focus();
+    });
+
+    inputs.forEach((input, index) => {
+      input.addEventListener('input', () => {
+        input.value = input.value.toUpperCase();
+        if (input.value && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value && index > 0) {
+          inputs[index - 1].focus();
+        }
+      });
+    });
+
+    document.getElementById('codeInput').addEventListener('paste', (e) => {
+      e.preventDefault();
+      const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
+      if (pasteData.length === 4) {
+        for (let i = 0; i < 4; i++) {
+          inputs[i].value = pasteData[i];
+        }
+        Check();
+      }
+    });
+  </script>
+</body>
+</html>
